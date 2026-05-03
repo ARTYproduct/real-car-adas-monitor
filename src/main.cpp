@@ -1,7 +1,10 @@
 #include <opencv2/opencv.hpp>
 #include "OBDParser.hpp"
+#include "onnx_classifier.h"
 #include <iostream>
 #include <chrono>
+#include <iomanip>
+#include <algorithm>
 
 void drawDashboard(cv::Mat& frame, const VehicleData& data) {
     // 1. Создаем полупрозрачную подложку (Overlay)
@@ -27,9 +30,34 @@ void drawDashboard(cv::Mat& frame, const VehicleData& data) {
 }
 
 int main() {
+    std::cout << "[INFO] Loading OBD Data..." << std::endl;
     OBDParser parser("data/obd_data.csv");
     std::vector<VehicleData> records = parser.parse();
     if (records.empty()) return -1;
+
+    std::cout << "[INFO] Loading ONNX Classifier..." << std::endl;
+    try {
+        ONNXClassifier classifier("data/driver_classifier.onnx", "data/normalization_params.json");
+        
+        std::cout << "\n--- Task 4: ONNX Classifier Verification (First 20 records) ---" << std::endl;
+        std::cout << std::left << std::setw(10) << "Record" 
+                  << std::setw(15) << "Prediction" 
+                  << std::setw(15) << "Confidence" << std::endl;
+        std::cout << "----------------------------------------" << std::endl;
+        
+        int n_tests = std::min(20, (int)records.size());
+        for (int i = 0; i < n_tests; ++i) {
+            ClassificationResult res = classifier.classify(records[i].features);
+            std::cout << std::left << std::setw(10) << i 
+                      << std::setw(15) << res.labelStr 
+                      << std::fixed << std::setprecision(4) << res.confidence << std::endl;
+        }
+        std::cout << "----------------------------------------\n" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "[ERROR] Classifier init failed: " << e.what() << std::endl;
+    }
+
+    std::cout << "[INFO] Starting Video Capture..." << std::endl;
 
     cv::VideoCapture cap(0);
     if (!cap.isOpened()) return -1;

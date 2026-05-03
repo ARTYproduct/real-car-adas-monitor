@@ -1,20 +1,24 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <array>
 
 struct VehicleData {
     double timestamp;
-    int speed;
-    int rpm;
+    double speed;
+    double rpm;
     double throttle;
     double temp;
-    double fuel;
+    std::array<float, 6> features; // Для ONNXClassifier
 };
 
 class OBDParser {
 public:
-    OBDParser(const std::string& filename);
+    OBDParser(const std::string& filePath) : filePath_(filePath) {}
     std::vector<VehicleData> parse();
+
+    static std::vector<VehicleData> parseCSV(const std::string& filePath);
+
 private:
-    std::string filename;
+    std::string filePath_;
 };

@@ -3,35 +3,60 @@
 #include <sstream>
 #include <iostream>
 
-OBDParser::OBDParser(const std::string& filename) : filename(filename) {}
-
 std::vector<VehicleData> OBDParser::parse() {
+    return parseCSV(filePath_);
+}
+
+std::vector<VehicleData> OBDParser::parseCSV(const std::string& filePath) {
     std::vector<VehicleData> data;
-    std::ifstream file(filename);
-    if (!file.is_open()) return data;
+    std::ifstream file(filePath);
+
+    if (!file.is_open()) {
+        std::cerr << "[ERROR] OBD-II Data not found at: " << filePath << std::endl;
+        return data;
+    }
 
     std::string line;
-    std::getline(file, line); // Header
+    std::getline(file, line); // Пропускаем Header
 
     while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
         std::stringstream ss(line);
-        std::string word;
-        std::vector<std::string> row;
-        while (std::getline(ss, word, ',')) {
-            row.push_back(word);
+        std::string value;
+        std::vector<std::string> tokens;
+        
+        while (std::getline(ss, value, ',')) {
+            tokens.push_back(value);
         }
 
-        if (row.size() > 9) {
-            try {
-                VehicleData entry;
-                entry.timestamp = std::stod(row[2]);
-                entry.speed = static_cast<int>(std::stod(row[5]));
-                entry.rpm = static_cast<int>(std::stod(row[7]));
-                entry.throttle = std::stod(row[8]);
-                entry.temp = std::stod(row[9]);
-                data.push_back(entry);
-            } catch (...) { continue; }
+        // Если не хватает колонок (по формату Kaggle их ~19)
+        if (tokens.size() < 18) continue;
+
+        try {
+            VehicleData frame;
+            frame.timestamp = std::stod(tokens[2]);
+            frame.speed = std::stod(tokens[5]);
+            frame.rpm = std::stod(tokens[7]);
+            frame.throttle = std::stod(tokens[8]);
+            frame.temp = std::stod(tokens[9]);
+            
+            // Фичи для нейросети (6 штук)
+            frame.features[0] = static_cast<float>(frame.speed);
+            frame.features[1] = static_cast<float>(frame.rpm);
+            frame.features[2] = static_cast<float>(frame.throttle);
+            frame.features[3] = static_cast<float>(frame.temp);
+            frame.features[4] = std::stof(tokens[10]); // Short_Term_Fuel_Trim
+            frame.features[5] = std::stof(tokens[17]); // log_MAF
+
+            data.push_back(frame);
+        } catch (...) {
+            // Игнорируем мусорные строки
+            continue;
         }
     }
+
+    file.close();
+    std::cout << "[SUCCESS] Parsed " << data.size() << " frames for ADAS Monitor." << std::endl;
     return data;
 }
