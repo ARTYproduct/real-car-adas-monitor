@@ -23,6 +23,11 @@ DriverState DMSMonitor::analyze(const cv::Mat& frame) {
     state.alert_distracted = false;
     state.face_rect = cv::Rect(0, 0, 0, 0);
 
+    // Guard: unloaded model or empty frame – return safe defaults
+    if (faceNet_.empty() || frame.empty()) {
+        return state;
+    }
+
     // 1. Detect face
     cv::Rect faceRect = detectFace(frame);
     if (faceRect.area() == 0) {

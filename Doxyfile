@@ -1,0 +1,17 @@
+PROJECT_NAME           = "Real-Car ADAS Monitor"
+PROJECT_NUMBER         = 1.0
+PROJECT_BRIEF          = "Advanced Driver-Assistance System with DMS, OBD-II telemetry and driving-style classification"
+OUTPUT_DIRECTORY       = docs/doxygen
+INPUT                  = src README.md
+FILE_PATTERNS          = *.cpp *.h *.hpp *.md
+RECURSIVE              = YES
+EXTRACT_ALL            = YES
+EXTRACT_PRIVATE        = NO
+GENERATE_HTML          = YES
+HTML_OUTPUT            = html
+GENERATE_LATEX         = NO
+USE_MDFILE_AS_MAINPAGE = README.md
+HAVE_DOT               = NO
+QUIET                  = YES
+WARNINGS               = YES
+WARN_IF_UNDOCUMENTED   = NO

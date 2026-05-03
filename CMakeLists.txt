@@ -1,59 +1,78 @@
 cmake_minimum_required(VERSION 3.20)
-project(RealCarMonitor)
+project(RealCarMonitor VERSION 1.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Указываем CMake, где искать Homebrew библиотеки на M1
+# Homebrew libraries on Apple Silicon
 list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew")
 
-# Поиск OpenCV
+# OpenCV
 find_package(OpenCV REQUIRED)
 
-# Поиск ONNX Runtime (уже прописано через пути, оставляем как есть)
+# ONNX Runtime
 include_directories(/opt/homebrew/include/onnxruntime)
 link_directories(/opt/homebrew/lib)
 
-# Включаем заголовки из папки src (чтобы можно было писать #include "OBDParser.hpp" без лишних путей)
 include_directories(src)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
-# Собираем все исходники
+# -----------------------------------------------------------------------
+# Main executable
+# -----------------------------------------------------------------------
 file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.hpp" "src/*.h")
 
 add_executable(RealCarMonitor ${SOURCES})
 
-# Линковка
-target_link_libraries(RealCarMonitor 
-    ${OpenCV_LIBS} 
+target_link_libraries(RealCarMonitor
+    ${OpenCV_LIBS}
     onnxruntime
 )
 
-# Копируем папку data и models в директорию, где лежит бинарник, после сборки
+# Copy data/models to build directory; create output folder
 add_custom_command(TARGET RealCarMonitor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/data" "$<TARGET_FILE_DIR:RealCarMonitor>/data"
+        "${CMAKE_SOURCE_DIR}/data" "$<TARGET_FILE_DIR:RealCarMonitor>/data"
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-    "${CMAKE_SOURCE_DIR}/models" "$<TARGET_FILE_DIR:RealCarMonitor>/models"
+        "${CMAKE_SOURCE_DIR}/models" "$<TARGET_FILE_DIR:RealCarMonitor>/models"
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+        "$<TARGET_FILE_DIR:RealCarMonitor>/output"
 )
 
-# --- Секция тестирования ---
+# -----------------------------------------------------------------------
+# Tests
+# -----------------------------------------------------------------------
 enable_testing()
 
-# Явно указываем пути для GTest на Apple Silicon
 include_directories(/opt/homebrew/include)
 link_directories(/opt/homebrew/lib)
 
-# Пытаемся найти пакет
 find_package(GTest REQUIRED)
 
-# Создаем исполняемый файл для тестов
+# OBD parser tests
 add_executable(run_tests tests/test_obd.cpp src/OBDParser.cpp)
-
-# Линкуем
-target_link_libraries(run_tests 
-    GTest::gtest 
+target_link_libraries(run_tests
+    GTest::gtest
     GTest::gtest_main
 )
-
 add_test(NAME OBDTests COMMAND run_tests)
+
+# DMS monitor tests
+add_executable(run_dms_tests
+    tests/test_dms.cpp
+    src/DMSMonitor.cpp
+)
+target_include_directories(run_dms_tests PRIVATE src ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(run_dms_tests
+    GTest::gtest
+    GTest::gtest_main
+    ${OpenCV_LIBS}
+)
+
+# Copy models for DMS tests so real-model test can find them
+add_custom_command(TARGET run_dms_tests POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/models" "$<TARGET_FILE_DIR:run_dms_tests>/models"
+)
+
+add_test(NAME DMSTests COMMAND run_dms_tests)

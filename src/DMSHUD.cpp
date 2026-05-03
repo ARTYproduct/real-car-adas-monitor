@@ -4,7 +4,7 @@
 DMSHUD::DMSHUD() {}
 
 void DMSHUD::draw(cv::Mat& canvas, const cv::Mat& cameraFrame, const DriverState& state) {
-    // Вставляем кадр с камеры в правую часть (начиная с x=320)
+    // Вставляем кадр с камеры в правую часть (начиная с x=320 для холста 960×480)
     cv::Rect rightHalf(320, 0, 640, 480);
     cv::Mat dmsCanvas = canvas(rightHalf);
 
