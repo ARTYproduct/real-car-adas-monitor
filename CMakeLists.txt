@@ -19,7 +19,7 @@ include_directories(src)
 include_directories(${OpenCV_INCLUDE_DIRS})
 
 # Собираем все исходники
-file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.hpp")
+file(GLOB_RECURSE SOURCES "src/*.cpp" "src/*.hpp" "src/*.h")
 
 add_executable(RealCarMonitor ${SOURCES})
 
