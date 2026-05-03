@@ -29,10 +29,12 @@ target_link_libraries(RealCarMonitor
     onnxruntime
 )
 
-# Копируем папку data в директорию, где лежит бинарник, после сборки
+# Копируем папку data и models в директорию, где лежит бинарник, после сборки
 add_custom_command(TARGET RealCarMonitor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     "${CMAKE_SOURCE_DIR}/data" "$<TARGET_FILE_DIR:RealCarMonitor>/data"
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/models" "$<TARGET_FILE_DIR:RealCarMonitor>/models"
 )
 
 # --- Секция тестирования ---

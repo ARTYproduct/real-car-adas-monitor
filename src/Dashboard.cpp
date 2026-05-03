@@ -23,13 +23,13 @@ void Dashboard::draw(cv::Mat& frame, double speed, double rpm, double temp, doub
 
     // Линейные приборы
     // Температура (0-120)
-    drawLinearGauge(frame, cv::Rect(30, 220, 260, 20), temp, 120.0, "Temp (C)");
+    drawLinearGauge(frame, cv::Rect(30, 220, 220, 20), temp, 120.0, "Temp (C)");
     
     // Топливо (0-100)
-    drawLinearGauge(frame, cv::Rect(30, 270, 260, 20), fuel, 100.0, "Fuel (%)");
+    drawLinearGauge(frame, cv::Rect(30, 270, 220, 20), fuel, 100.0, "Fuel (%)");
     
     // Дроссельная заслонка (0-100)
-    drawLinearGauge(frame, cv::Rect(30, 320, 260, 20), throttle, 100.0, "Throttle (%)");
+    drawLinearGauge(frame, cv::Rect(30, 320, 220, 20), throttle, 100.0, "Throttle (%)");
 
     // Стиль вождения
     cv::Scalar styleColor;
